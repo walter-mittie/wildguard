@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WildGuard — Endangered Animals Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#7ec88a;--green-light:#9dd8a7;--bg:#0a1a0e;--text:#e8f5e9;
+  --muted:rgba(232,245,233,0.5);--dim:rgba(232,245,233,0.35);
+  --border:rgba(255,255,255,0.09);--card:rgba(255,255,255,0.03);
+  --red:#e05a45;--amber:#f5c87a;
+  --pad:clamp(1.4rem,3.5vw,4rem);
+  --fxs:clamp(10px,0.75vw,13px);
+  --fsm:clamp(12px,0.9vw,15px);
+  --fsb:clamp(13px,1vw,16px);
+  --fsh3:clamp(15px,1.25vw,20px);
+  --fsh2:clamp(20px,2vw,32px);
+  --fsh1:clamp(36px,4.5vw,68px);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:var(--fsb);min-height:100vh;overflow-x:hidden}
+
+/* PAGE SYSTEM */
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:1rem var(--pad);border-bottom:0.5px solid var(--border);background:rgba(10,26,14,0.97);position:sticky;top:0;z-index:200;backdrop-filter:blur(8px)}
+.logo{font-family:'Playfair Display',serif;font-size:clamp(18px,1.6vw,28px);font-weight:900;color:var(--green);cursor:pointer;text-decoration:none}
+.logo span{color:var(--text)}
+.navlinks{display:flex;gap:clamp(1rem,3vw,3.5rem);list-style:none}
+.navlinks a{color:var(--muted);text-decoration:none;font-size:var(--fsm);font-weight:500;cursor:pointer;padding-bottom:2px;border-bottom:2px solid transparent;transition:color .2s}
+.navlinks a.active{color:var(--green);border-bottom-color:var(--green)}
+.navlinks a:hover{color:var(--text)}
+
+/* BUTTONS */
+.btn{background:var(--green);color:var(--bg);border:none;border-radius:100px;padding:clamp(7px,.6vw,12px) clamp(16px,1.6vw,32px);font-size:var(--fsm);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s,transform .1s;display:inline-block;white-space:nowrap}
+.btn:hover{background:var(--green-light);transform:scale(1.02)}
+.minibtn{background:transparent;color:var(--muted);border:0.5px solid var(--border);border-radius:100px;padding:4px 12px;font-size:var(--fxs);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.minibtn:hover{border-color:rgba(126,200,138,.4);color:var(--green)}
+
+/* SHARED */
+.sl{font-size:var(--fxs);font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:1rem;padding:0 var(--pad);display:block}
+.divider{height:0.5px;background:var(--border);margin:0 var(--pad) 2rem}
+
+/* ── HOME ── */
+.home-hero{padding:clamp(2rem,4vw,5rem) var(--pad) 1.5rem;text-align:center}
+.hero-tag{display:inline-block;background:rgba(126,200,138,.12);border:0.5px solid rgba(126,200,138,.3);color:var(--green);font-size:var(--fxs);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:1.2rem}
+.home-hero h1{font-family:'Playfair Display',serif;font-size:var(--fsh1);font-weight:900;line-height:1.08;margin-bottom:1rem}
+.home-hero h1 em{font-style:italic;color:var(--green)}
+.home-hero>p{color:var(--muted);font-size:clamp(14px,1.1vw,19px);max-width:560px;margin:0 auto 1.8rem;line-height:1.7}
+.clock-banner{display:flex;align-items:center;justify-content:center;gap:.8rem;background:rgba(220,80,60,.1);border:0.5px solid rgba(220,80,60,.3);border-radius:12px;padding:.9rem 1.5rem;margin:0 auto 2.5rem;max-width:660px}
+.clock-dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.clock-banner p{margin:0;font-size:var(--fsm);color:#e8a090;font-weight:500}
+.ptabs{display:flex;gap:.5rem;padding:0 var(--pad);margin-bottom:1.5rem;flex-wrap:wrap}
+.ptab{padding:7px 16px;border-radius:100px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:var(--fsm);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.ptab.active,.ptab:hover{background:rgba(126,200,138,.1);border-color:rgba(126,200,138,.4);color:var(--green)}
+.astrip{display:flex;gap:1rem;padding:0 var(--pad) 2.5rem;overflow-x:auto;scrollbar-width:none}
+.astrip::-webkit-scrollbar{display:none}
+.acard{flex:0 0 clamp(160px,16vw,240px);background:var(--card);border:0.5px solid var(--border);border-radius:16px;padding:clamp(1rem,1.2vw,1.8rem);cursor:pointer;transition:border-color .2s,background .2s}
+.acard:hover{border-color:rgba(126,200,138,.4);background:rgba(126,200,138,.05)}
+.acard.crit{border-color:rgba(220,80,60,.3)}
+.aemoji{font-size:clamp(36px,4vw,56px);display:block;margin-bottom:.8rem;line-height:1}
+.aname{font-family:'Playfair Display',serif;font-size:clamp(13px,1.1vw,18px);font-weight:700;margin-bottom:3px}
+.aloc{font-size:var(--fxs);color:var(--dim);margin-bottom:.8rem}
+.spill{display:inline-block;font-size:var(--fxs);font-weight:500;padding:3px 9px;border-radius:100px}
+.spill.crit{background:rgba(220,80,60,.18);color:#e8a090}
+.spill.end{background:rgba(239,159,39,.18);color:var(--amber)}
+.apop{margin-top:.6rem;font-size:clamp(18px,1.6vw,28px);font-weight:500;color:var(--green)}
+.apop span{font-size:var(--fxs);color:var(--dim);font-weight:400}
+.atrend{font-size:var(--fxs);color:#e8a090;margin-top:3px}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:0 var(--pad) 2rem}
+.dcard{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:clamp(1rem,1.2vw,1.8rem)}
+.dicon{font-size:clamp(22px,2vw,34px);display:block;margin-bottom:.6rem}
+.dcard h3{font-size:var(--fsh3);font-weight:500;margin-bottom:6px}
+.dcard p{font-size:var(--fsm);color:var(--muted);line-height:1.6}
+.hrow{display:flex;gap:.7rem;padding:0 var(--pad) 2rem;flex-wrap:wrap}
+.hchip{display:flex;align-items:center;gap:7px;background:var(--card);border:0.5px solid var(--border);border-radius:100px;padding:7px 16px;cursor:pointer;font-size:var(--fsm);color:var(--muted);transition:all .2s}
+.hchip:hover,.hchip.active{background:rgba(126,200,138,.1);border-color:rgba(126,200,138,.4);color:var(--green)}
+.agrid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;padding:0 var(--pad) 2rem}
+.artcard{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:clamp(1rem,1.2vw,1.6rem);cursor:pointer;transition:border-color .2s}
+.artcard:hover{border-color:rgba(126,200,138,.3)}
+.atag{display:inline-block;font-size:var(--fxs);font-weight:500;letter-spacing:.5px;background:rgba(126,200,138,.1);color:var(--green);padding:3px 9px;border-radius:100px;margin-bottom:.6rem}
+.artcard h3{font-size:clamp(13px,1.05vw,17px);font-weight:500;margin-bottom:5px;line-height:1.4}
+.artcard p{font-size:var(--fxs);color:var(--dim)}
+.crow{display:flex;gap:.8rem;padding:0 var(--pad) 2rem;flex-wrap:wrap}
+.cchip{display:flex;align-items:center;gap:10px;background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:10px 18px;cursor:pointer;transition:all .2s}
+.cchip:hover{border-color:rgba(126,200,138,.4);background:rgba(126,200,138,.05)}
+.cavatar{width:clamp(28px,2.5vw,42px);height:clamp(28px,2.5vw,42px);border-radius:50%;background:rgba(126,200,138,.14);display:flex;align-items:center;justify-content:center;font-size:clamp(14px,1.3vw,22px)}
+.cinfo p{font-size:var(--fsm);font-weight:500}
+.cinfo span{font-size:var(--fxs);color:var(--dim)}
+.fcta{margin:0 var(--pad) 2.5rem;background:rgba(126,200,138,.08);border:0.5px solid rgba(126,200,138,.22);border-radius:16px;padding:clamp(1.4rem,2vw,2.8rem) var(--pad);display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.fcta h3{font-family:'Playfair Display',serif;font-size:var(--fsh2);font-weight:700;margin-bottom:5px}
+.fcta p{font-size:var(--fsm);color:var(--muted)}
+
+/* ── GARDEN ── */
+.ghero{padding:clamp(1.5rem,3vw,3rem) var(--pad) 1.5rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.ghero h1{font-family:'Playfair Display',serif;font-size:var(--fsh1);font-weight:900;margin-bottom:6px}
+.ghero h1 em{color:var(--green);font-style:italic}
+.ghero>div>p{font-size:var(--fsm);color:var(--muted);margin-bottom:1rem;max-width:480px;line-height:1.6}
+.gbadge{display:inline-flex;align-items:center;gap:7px;background:rgba(239,159,39,.12);border:0.5px solid rgba(239,159,39,.3);border-radius:100px;padding:6px 14px;font-size:var(--fxs);color:var(--amber);font-weight:500;margin-right:.7rem}
+.gcount{font-size:var(--fxs);color:var(--dim)}
+.gcount strong{color:var(--green)}
+.gstats{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;padding:0 var(--pad) 2rem}
+.gstat{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:clamp(.8rem,1vw,1.4rem)}
+.gslabel{font-size:var(--fxs);color:var(--dim);letter-spacing:.5px;margin-bottom:4px}
+.gsval{font-size:clamp(20px,2vw,32px);font-weight:500}
+.gssub{font-size:var(--fxs);color:var(--green);margin-top:2px}
+.hscene-wrap{margin:0 var(--pad) 2rem;border-radius:20px;overflow:hidden;border:0.5px solid var(--border)}
+.htabs{display:flex;background:rgba(0,0,0,.4);border-bottom:0.5px solid rgba(255,255,255,.07)}
+.htab{padding:10px 18px;font-size:var(--fxs);font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:color .2s;border-bottom:2px solid transparent}
+.htab.active{color:var(--green);border-bottom-color:var(--green)}
+.hscene{height:clamp(160px,18vw,280px);position:relative;overflow:hidden;background:linear-gradient(180deg,#0d2e18 0%,#1a4a28 55%,#0f2d16 100%)}
+.skylayer{position:absolute;top:0;left:0;right:0;height:80px;background:linear-gradient(180deg,#071810 0%,transparent 100%)}
+.glayer{position:absolute;bottom:0;left:0;right:0;height:55px;background:linear-gradient(180deg,#1a4a28 0%,#0d2e18 100%);border-top:1px solid rgba(126,200,138,.18)}
+.star{position:absolute;width:2px;height:2px;background:rgba(255,255,255,.6);border-radius:50%;animation:twinkle 2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+.tree{position:absolute;bottom:48px;font-size:clamp(38px,5vw,64px);animation:sway 4s ease-in-out infinite;transform-origin:bottom center;user-select:none}
+@keyframes sway{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
+.sanimal{position:absolute;font-size:clamp(22px,3vw,36px);cursor:pointer;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));transition:transform .2s}
+.sanimal:hover{transform:scale(1.25)}
+.sanimal.float{animation:floatY 3s ease-in-out infinite}
+.sanimal.walk{animation:walkX 12s linear infinite}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes walkX{0%{transform:translateX(0) scaleX(1)}48%{transform:translateX(300px) scaleX(1)}50%{transform:translateX(300px) scaleX(-1)}98%{transform:translateX(0) scaleX(-1)}100%{transform:translateX(0) scaleX(1)}}
+.slabel{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:var(--fxs);color:rgba(126,200,138,.55);font-weight:500}
+.adgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:0 var(--pad) 2rem}
+.adcard{background:var(--card);border:0.5px solid var(--border);border-radius:16px;padding:clamp(.9rem,1.2vw,1.6rem);transition:border-color .2s}
+.adcard:hover{border-color:rgba(126,200,138,.28)}
+.adcard.feat{border-color:rgba(126,200,138,.3);background:rgba(126,200,138,.04)}
+.adtop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.8rem}
+.ademo{font-size:clamp(30px,3.5vw,48px);line-height:1}
+.adbadge{font-size:var(--fxs);font-weight:500;padding:3px 9px;border-radius:100px;background:rgba(126,200,138,.14);color:var(--green)}
+.adbadge.gold{background:rgba(239,159,39,.18);color:var(--amber)}
+.adname{font-family:'Playfair Display',serif;font-size:clamp(13px,1.2vw,18px);font-weight:700;margin-bottom:2px}
+.adspec{font-size:var(--fxs);color:var(--dim);margin-bottom:.8rem;font-style:italic}
+.trsect{margin-bottom:.8rem}
+.trlabel{display:flex;justify-content:space-between;font-size:var(--fxs);color:var(--muted);margin-bottom:4px}
+.trlabel strong{color:var(--text);font-weight:500}
+.trbg{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.trfill{height:4px;border-radius:2px}
+.trfill.dec{background:var(--red)}
+.trfill.rec{background:var(--green)}
+.adoff{display:flex;align-items:center;gap:6px;font-size:var(--fxs);color:var(--muted);margin-bottom:.8rem}
+.odot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.adfoot{display:flex;align-items:center;justify-content:space-between;border-top:0.5px solid var(--border);padding-top:.8rem}
+.addonate{font-size:var(--fxs);color:var(--muted)}
+.addonate strong{color:var(--green);font-size:var(--fsm)}
+.addnew{border:0.5px dashed rgba(255,255,255,.14)!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:200px;cursor:pointer}
+.addnew:hover{border-color:rgba(126,200,138,.4)!important;background:rgba(126,200,138,.04)!important}
+.addicon{width:40px;height:40px;border-radius:50%;background:rgba(126,200,138,.12);display:flex;align-items:center;justify-content:center;margin:0 auto .8rem;font-size:22px;color:var(--green)}
+.addnew p{font-size:var(--fsm);color:var(--muted);margin:4px 0 0;line-height:1.5}
+.addnew strong{color:var(--text);font-weight:500}
+.tchart{margin:0 var(--pad) 2rem;background:var(--card);border:0.5px solid var(--border);border-radius:16px;padding:clamp(1rem,1.4vw,2rem)}
+.tchead{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+.tchead h3{font-size:var(--fsh3);font-weight:500}
+.tlegend{display:flex;gap:1rem;flex-wrap:wrap}
+.litem{display:flex;align-items:center;gap:6px;font-size:var(--fxs);color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:50%}
+.donpanel{margin:0 var(--pad) 2rem;background:rgba(126,200,138,.06);border:0.5px solid rgba(126,200,138,.18);border-radius:16px;padding:clamp(1.2rem,1.5vw,2rem)}
+.donpanel h3{font-family:'Playfair Display',serif;font-size:var(--fsh2);font-weight:700;margin-bottom:4px}
+.donpanel>p{font-size:var(--fsm);color:var(--muted);margin-bottom:1.2rem}
+.donopts{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}
+.donchip{padding:8px 18px;border-radius:100px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:var(--fsm);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.donchip.active,.donchip:hover{background:rgba(126,200,138,.14);border-color:rgba(126,200,138,.45);color:var(--green)}
+.donimp{font-size:var(--fsm);color:var(--muted);margin-bottom:1rem;padding:10px 14px;background:rgba(0,0,0,.18);border-radius:10px;line-height:1.6}
+.donimp strong{color:var(--green)}
+.comgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;padding:0 var(--pad) 2.5rem}
+.comcard{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:clamp(.8rem,1vw,1.4rem);text-align:center}
+.comemo{font-size:clamp(24px,2.5vw,36px);display:block;margin-bottom:6px}
+.comcard h4{font-size:clamp(16px,1.8vw,28px);font-weight:500;margin-bottom:2px}
+.comcard p{font-size:var(--fxs);color:var(--dim)}
+
+/* ── ACTIVITIES ── */
+.acthero{padding:clamp(1.5rem,3vw,3rem) var(--pad) 1.5rem;text-align:center}
+.acthero h1{font-family:'Playfair Display',serif;font-size:var(--fsh1);font-weight:900;margin-bottom:.5rem}
+.acthero h1 em{color:var(--green);font-style:italic}
+.acthero p{font-size:var(--fsm);color:var(--muted);max-width:440px;margin:0 auto;line-height:1.6}
+.xpbar{margin:1.2rem var(--pad);background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem}
+.xpavatar{width:clamp(36px,3.5vw,52px);height:clamp(36px,3.5vw,52px);border-radius:50%;background:rgba(126,200,138,.14);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,1.8vw,26px);flex-shrink:0}
+.xpinfo{flex:1}
+.xptop{display:flex;justify-content:space-between;margin-bottom:6px}
+.xpname{font-size:var(--fsm);font-weight:500}
+.xplvl{font-size:var(--fxs);color:var(--green)}
+.xptrack{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.xpfill{height:6px;width:62%;background:var(--green);border-radius:3px}
+.xpsub{font-size:var(--fxs);color:var(--dim);margin-top:4px}
+.xpbadges{display:flex;gap:6px}
+.xpbadge{width:clamp(26px,2.8vw,40px);height:clamp(26px,2.8vw,40px);border-radius:50%;background:rgba(239,159,39,.14);display:flex;align-items:center;justify-content:center;font-size:clamp(13px,1.4vw,20px)}
+.xpbadge.lock{opacity:.22;filter:grayscale(1)}
+.actcards{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;padding:0 var(--pad)}
+.actcard{background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden;cursor:pointer;transition:border-color .2s,background .2s}
+.actcard:hover{border-color:rgba(126,200,138,.35);background:rgba(126,200,138,.04)}
+.ach{padding:1.2rem 1.4rem 0;display:flex;align-items:flex-start;justify-content:space-between}
+.acico{font-size:clamp(28px,3.5vw,46px);line-height:1}
+.acdiff{font-size:var(--fxs);font-weight:500;padding:3px 9px;border-radius:100px}
+.acdiff.easy{background:rgba(126,200,138,.14);color:var(--green)}
+.acdiff.med{background:rgba(239,159,39,.14);color:var(--amber)}
+.acdiff.hard{background:rgba(220,80,60,.14);color:#e8a090}
+.acb{padding:.8rem 1.4rem 1.2rem}
+.acb h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700;margin-bottom:4px}
+.acb p{font-size:var(--fsm);color:var(--muted);margin-bottom:1rem;line-height:1.6}
+.acfoot{display:flex;align-items:center;justify-content:space-between}
+.acxp{font-size:var(--fxs);color:var(--green);font-weight:500}
+.acpl{font-size:var(--fxs);color:var(--dim)}
+.acbar{height:3px;background:rgba(255,255,255,.05);margin-top:1rem}
+.acbarf{height:3px;background:var(--green)}
+
+/* quiz */
+.quizp{margin:1.5rem var(--pad) 0;background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden}
+.quiztop{background:rgba(126,200,138,.07);border-bottom:0.5px solid rgba(126,200,138,.14);padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between}
+.quiztop h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700}
+.qprog{font-size:var(--fxs);color:var(--muted)}
+.qprog strong{color:var(--green)}
+.qbody{padding:1.4rem}
+.qq{font-size:var(--fsh3);font-weight:500;margin-bottom:1.2rem;line-height:1.5}
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.2rem}
+.qopt{background:rgba(255,255,255,.04);border:0.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;font-size:var(--fsm);color:var(--muted);cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:8px}
+.qopt:hover:not(.dis){border-color:rgba(126,200,138,.4);background:rgba(126,200,138,.07);color:var(--text)}
+.qopt.cor{border-color:rgba(126,200,138,.6);background:rgba(126,200,138,.14);color:var(--green)}
+.qopt.wrg{border-color:rgba(220,80,60,.5);background:rgba(220,80,60,.09);color:#e8a090}
+.qopt.dis{pointer-events:none;opacity:.5}
+.qletter{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:var(--fxs);font-weight:500;flex-shrink:0}
+.qfb{padding:10px 14px;border-radius:10px;font-size:var(--fsm);margin-bottom:1rem;line-height:1.6;display:none}
+.qfb.show{display:block}
+.qfb.good{background:rgba(126,200,138,.09);color:#9dd8a7;border:0.5px solid rgba(126,200,138,.2)}
+.qfb.bad{background:rgba(220,80,60,.09);color:#e8a090;border:0.5px solid rgba(220,80,60,.2)}
+.qnav{display:flex;align-items:center;justify-content:space-between}
+.qpills{display:flex;gap:4px}
+.qpill{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1)}
+.qpill.cor{background:var(--green)}
+.qpill.wrg{background:var(--red)}
+.qpill.cur{background:var(--amber)}
+
+/* habitat builder */
+.hbp{margin:1.5rem var(--pad) 0;background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden}
+.hbtop{padding:1rem 1.4rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.hbtop h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700}
+.hbscore{font-size:var(--fxs);color:var(--amber);background:rgba(239,159,39,.12);border:0.5px solid rgba(239,159,39,.25);border-radius:100px;padding:4px 12px}
+.hbbody{padding:1.2rem 1.4rem}
+.hbinstr{font-size:var(--fsm);color:var(--muted);margin-bottom:1rem;line-height:1.6}
+.hbinstr strong{color:var(--text)}
+.hbhabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.hbhab{padding:6px 14px;border-radius:100px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:var(--fsm);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.hbhab.active{background:rgba(126,200,138,.11);border-color:rgba(126,200,138,.4);color:var(--green)}
+.hbscene{background:rgba(0,0,0,.28);border-radius:12px;height:clamp(80px,8vw,120px);border:0.5px dashed rgba(255,255,255,.1);display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:0 1rem;margin-bottom:1rem;position:relative}
+.hbdlabel{font-size:var(--fxs);color:rgba(232,245,233,.18);position:absolute;width:100%;text-align:center;pointer-events:none}
+.hbplaced{font-size:clamp(24px,3vw,36px);cursor:default;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.hbresult{padding:10px 14px;border-radius:10px;font-size:var(--fsm);background:rgba(126,200,138,.08);border:0.5px solid rgba(126,200,138,.2);color:#9dd8a7;display:none;margin-bottom:.8rem}
+.hbresult.show{display:block}
+.hbpalbl{font-size:var(--fxs);color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:.6rem}
+.hbpal{display:flex;flex-wrap:wrap;gap:.5rem}
+.hbitem{background:rgba(255,255,255,.04);border:0.5px solid var(--border);border-radius:10px;padding:7px 11px;font-size:clamp(18px,2vw,26px);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hbitem:hover{background:rgba(126,200,138,.09);border-color:rgba(126,200,138,.35);transform:scale(1.05)}
+.hbitem span{font-size:var(--fxs);color:var(--dim);font-family:'DM Sans',sans-serif}
+
+/* what disappears */
+.wdp{margin:1.5rem var(--pad) 0;background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden}
+.wdtop{padding:1rem 1.4rem;border-bottom:0.5px solid var(--border)}
+.wdtop h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700;margin-bottom:3px}
+.wdtop p{font-size:var(--fsm);color:var(--muted)}
+.wdbody{padding:1.2rem 1.4rem}
+.wdrow{display:flex;gap:.6rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.wdbtn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.04);border:0.5px solid var(--border);border-radius:100px;padding:7px 16px;font-size:var(--fsm);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);transition:all .2s}
+.wdbtn:hover{border-color:rgba(126,200,138,.4);color:var(--text)}
+.wdbtn.active{background:rgba(220,80,60,.09);border-color:rgba(220,80,60,.4);color:#e8a090}
+.wdimps{display:none}
+.wdimps.show{display:block}
+.wdicgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}
+.wdic{background:rgba(220,80,60,.05);border:0.5px solid rgba(220,80,60,.14);border-radius:12px;padding:.9rem}
+.wdicico{font-size:clamp(20px,2vw,30px);margin-bottom:6px;display:block}
+.wdic h4{font-size:var(--fsm);font-weight:500;margin-bottom:3px}
+.wdic p{font-size:var(--fxs);color:var(--muted);line-height:1.5}
+
+/* message */
+.msgp{margin:1.5rem var(--pad) 0;background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden}
+.msgtop{padding:1rem 1.4rem;border-bottom:0.5px solid var(--border)}
+.msgtop h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700;margin-bottom:3px}
+.msgtop p{font-size:var(--fsm);color:var(--muted)}
+.msgbody{padding:1.2rem 1.4rem}
+.msganims{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.msganim{background:rgba(255,255,255,.04);border:0.5px solid var(--border);border-radius:12px;padding:.7rem 1rem;text-align:center;cursor:pointer;transition:all .2s;flex:1;min-width:60px}
+.msganim:hover{border-color:rgba(126,200,138,.35)}
+.msganim.active{border-color:rgba(126,200,138,.5);background:rgba(126,200,138,.07)}
+.msganim .emo{font-size:clamp(22px,2.5vw,32px);display:block;margin-bottom:3px}
+.msganim .lbl{font-size:var(--fxs);color:var(--muted)}
+.msgtx{width:100%;background:rgba(0,0,0,.22);border:0.5px solid var(--border);border-radius:12px;padding:.9rem 1rem;color:var(--text);font-size:var(--fsm);font-family:'DM Sans',sans-serif;resize:none;height:78px;outline:none;transition:border-color .2s;line-height:1.6}
+.msgtx:focus{border-color:rgba(126,200,138,.4)}
+.msgtx::placeholder{color:rgba(232,245,233,.22)}
+.msgchar{font-size:var(--fxs);color:var(--dim);margin-bottom:1rem}
+.msgacts{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem}
+.msgacts .btn{flex:1}
+.msgshare{font-size:var(--fxs);color:var(--dim)}
+.msgclbl{font-size:var(--fxs);color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:.8rem}
+.msgpost{background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.06);border-radius:12px;padding:.8rem 1rem;display:flex;gap:.8rem;align-items:flex-start;margin-bottom:.6rem}
+.msgav{width:clamp(24px,2.5vw,36px);height:clamp(24px,2.5vw,36px);border-radius:50%;background:rgba(126,200,138,.14);display:flex;align-items:center;justify-content:center;font-size:clamp(12px,1.3vw,18px);flex-shrink:0}
+.mpname{font-size:var(--fsm);font-weight:500}
+.mpanml{font-size:var(--fxs);color:var(--dim);margin-left:6px}
+.mptx{font-size:var(--fsm);color:var(--muted);line-height:1.5;margin:3px 0}
+.mplikes{font-size:var(--fxs);color:var(--dim);cursor:pointer}
+.mplikes:hover{color:var(--red)}
+
+/* matchmaker */
+.matp{margin:1.5rem var(--pad) 0;background:var(--card);border:0.5px solid var(--border);border-radius:18px;overflow:hidden}
+.mattop{padding:1rem 1.4rem;border-bottom:0.5px solid var(--border)}
+.mattop h3{font-family:'Playfair Display',serif;font-size:var(--fsh3);font-weight:700;margin-bottom:3px}
+.mattop p{font-size:var(--fsm);color:var(--muted)}
+.matbody{padding:1.2rem 1.4rem}
+.matgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem}
+.matcol h4{font-size:var(--fxs);text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:.7rem}
+.matitem{background:rgba(255,255,255,.04);border:0.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:var(--fsm);cursor:pointer;margin-bottom:.5rem;color:var(--muted);transition:all .2s}
+.matitem:hover:not(.matched){border-color:rgba(126,200,138,.35);color:var(--text)}
+.matitem.sel{border-color:rgba(126,200,138,.5);background:rgba(126,200,138,.09);color:var(--green)}
+.matitem.matched{border-color:rgba(126,200,138,.55);background:rgba(126,200,138,.14);pointer-events:none;color:var(--green)}
+.matitem.wrong{border-color:rgba(220,80,60,.5);background:rgba(220,80,60,.09);color:#e8a090;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.matscore{font-size:var(--fsm);color:var(--muted)}
+.matscore strong{color:var(--green);font-size:var(--fsh3)}
+
+.botpad{height:3rem}
+</style>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+<nav>
+  <a class="logo" onclick="nav('home')">Wild<span>Guard</span></a>
+  <ul class="navlinks">
+    <li><a class="active" onclick="nav('home')">Home</a></li>
+    <li><a onclick="nav('garden')">My Garden</a></li>
+    <li><a onclick="nav('activities')">Activities</a></li>
+  </ul>
+  <button class="btn" onclick="nav('garden')">Adopt an animal →</button>
+</nav>
+<div class="home-hero">
+  <div class="hero-tag">🌍 Live tracking · 1,000+ species</div>
+  <h1>Every animal<br>deserves a <em>guardian</em></h1>
+  <p>Track the world's most endangered animals, learn why they matter, and take action before it's too late.</p>
+  <div class="clock-banner"><div class="clock-dot"></div><p>A species goes extinct every <strong>20 minutes</strong> — right now, 44,016 species are threatened</p></div>
+  <button class="btn" onclick="nav('garden')">Start protecting wildlife →</button>
+</div>
+<div class="ptabs" style="margin-top:1.5rem">
+  <button class="ptab active">Top 5 most endangered</button>
+  <button class="ptab">By habitat</button>
+  <button class="ptab">By region</button>
+</div>
+<span class="sl">Critical watch list</span>
+<div class="astrip">
+  <div class="acard crit"><span class="aemoji">🦏</span><p class="aname">Northern White Rhino</p><p class="aloc">Africa · Kenya</p><span class="spill crit">Critically endangered</span><div class="apop">2 <span>left alive</span></div><div class="atrend">↓ Functionally extinct</div></div>
+  <div class="acard crit"><span class="aemoji">🐅</span><p class="aname">Amur Leopard</p><p class="aloc">Asia · Russian Far East</p><span class="spill crit">Critically endangered</span><div class="apop">~100 <span>left alive</span></div><div class="atrend">↓ Down 30% this decade</div></div>
+  <div class="acard crit"><span class="aemoji">🦧</span><p class="aname">Sumatran Orangutan</p><p class="aloc">Asia · Sumatra</p><span class="spill crit">Critically endangered</span><div class="apop">13,846 <span>left alive</span></div><div class="atrend">↓ −1,000 per year</div></div>
+  <div class="acard crit"><span class="aemoji">🐘</span><p class="aname">Forest Elephant</p><p class="aloc">Africa · Congo Basin</p><span class="spill crit">Critically endangered</span><div class="apop">~100k <span>left alive</span></div><div class="atrend">↓ Down 86% in 30 yrs</div></div>
+  <div class="acard"><span class="aemoji">🐢</span><p class="aname">Hawksbill Sea Turtle</p><p class="aloc">Global · Tropical oceans</p><span class="spill end">Endangered</span><div class="apop">~8,000 <span>nesting females</span></div><div class="atrend">↓ Down 80% in 100 yrs</div></div>
+</div>
+<div class="divider"></div>
+<span class="sl">Why it matters to all of us</span>
+<div class="dgrid">
+  <div class="dcard"><span class="dicon">🌾</span><h3>Food chains collapse</h3><p>Each extinction ripples through the food web, destroying the balance that feeds us all.</p></div>
+  <div class="dcard"><span class="dicon">💧</span><h3>Clean water at risk</h3><p>Wetland animals like otters and beavers keep our rivers and water sources healthy.</p></div>
+  <div class="dcard"><span class="dicon">🌿</span><h3>Medicines disappear</h3><p>Over 50% of medicines come from nature. Extinction means cures we haven't found yet are lost forever.</p></div>
+</div>
+<span class="sl">Discover habitats</span>
+<div class="hrow">
+  <div class="hchip active"><span>🌴</span>Rainforest</div>
+  <div class="hchip"><span>🌊</span>Ocean</div>
+  <div class="hchip"><span>🏔️</span>Mountain</div>
+  <div class="hchip"><span>🌾</span>Grassland</div>
+  <div class="hchip"><span>🧊</span>Arctic</div>
+  <div class="hchip"><span>🏜️</span>Desert</div>
+  <div class="hchip"><span>🌲</span>Forest</div>
+</div>
+<div class="divider"></div>
+<span class="sl">Latest conservation news</span>
+<div class="agrid">
+  <div class="artcard"><span class="atag">RHINO</span><h3>Scientists attempt IVF to save the last Northern White Rhinos</h3><p>May 2026 · WWF</p></div>
+  <div class="artcard"><span class="atag">OCEAN</span><h3>New marine protected zones established across the Pacific</h3><p>April 2026 · BBC Earth</p></div>
+  <div class="artcard"><span class="atag">FOREST</span><h3>Orangutan numbers show first rise in Borneo in two decades</h3><p>March 2026 · National Geographic</p></div>
+  <div class="artcard"><span class="atag">UK</span><h3>Rewilding project brings beavers back to English rivers</h3><p>May 2026 · The Guardian</p></div>
+</div>
+<span class="sl">Support UK wildlife charities</span>
+<div class="crow">
+  <div class="cchip"><div class="cavatar">🐼</div><div class="cinfo"><p>WWF UK</p><span>wwf.org.uk</span></div></div>
+  <div class="cchip"><div class="cavatar">🦁</div><div class="cinfo"><p>Born Free</p><span>bornfree.org.uk</span></div></div>
+  <div class="cchip"><div class="cavatar">🐦</div><div class="cinfo"><p>RSPB</p><span>rspb.org.uk</span></div></div>
+  <div class="cchip"><div class="cavatar">🌿</div><div class="cinfo"><p>Wildlife Trusts</p><span>wildlifetrusts.org</span></div></div>
+</div>
+<div class="fcta"><div><h3>Ready to become a guardian?</h3><p>Build your Wildlife Garden and start protecting the animals you love today.</p></div><button class="btn" onclick="nav('garden')">Start my garden →</button></div>
+</div>
+
+<!-- ══ GARDEN ══ -->
+<div class="page" id="page-garden">
+<nav>
+  <a class="logo" onclick="nav('home')">Wild<span>Guard</span></a>
+  <ul class="navlinks">
+    <li><a onclick="nav('home')">Home</a></li>
+    <li><a class="active" onclick="nav('garden')">My Garden</a></li>
+    <li><a onclick="nav('activities')">Activities</a></li>
+  </ul>
+  <button class="btn" onclick="nav('activities')">Activities →</button>
+</nav>
+<div class="ghero">
+  <div>
+    <h1>My <em>Wildlife</em> Garden</h1>
+    <p>Your personal sanctuary. Adopt animals, watch their populations, track your impact and support the organisations protecting them.</p>
+    <span class="gbadge">⭐ Silver Guardian · Level 4</span><span class="gcount"><strong>84,219</strong> guardians today</span>
+  </div>
+  <button class="btn" onclick="nav('activities')">+ Adopt new animal</button>
+</div>
+<div class="gstats">
+  <div class="gstat"><div class="gslabel">Animals adopted</div><div class="gsval">3</div><div class="gssub">+1 this month</div></div>
+  <div class="gstat"><div class="gslabel">Total donated</div><div class="gsval">£47</div><div class="gssub">Across 3 charities</div></div>
+  <div class="gstat"><div class="gslabel">Wild offspring</div><div class="gsval">12</div><div class="gssub">Born since you joined</div></div>
+  <div class="gstat"><div class="gslabel">Guardian streak</div><div class="gsval">28</div><div class="gssub">days active</div></div>
+</div>
+<div class="hscene-wrap">
+  <div class="htabs">
+    <button class="htab active">🌴 Rainforest</button>
+    <button class="htab">🌊 Ocean</button>
+    <button class="htab">🏔️ Mountain</button>
+    <button class="htab">🧊 Arctic</button>
+  </div>
+  <div class="hscene">
+    <div class="star" style="top:10px;left:55px;animation-delay:.3s"></div>
+    <div class="star" style="top:18px;left:195px;animation-delay:1s"></div>
+    <div class="star" style="top:7px;left:400px;animation-delay:.7s"></div>
+    <div class="star" style="top:22px;left:530px;animation-delay:1.4s"></div>
+    <div class="skylayer"></div>
+    <div class="tree" style="left:3%">🌳</div>
+    <div class="tree" style="left:12%;animation-delay:.8s">🌴</div>
+    <div class="tree" style="left:72%;animation-delay:1.6s">🌳</div>
+    <div class="tree" style="left:84%;animation-delay:.4s;font-size:clamp(32px,4vw,52px)">🌴</div>
+    <div class="sanimal walk" style="bottom:52px;left:22%">🦧</div>
+    <div class="sanimal float" style="bottom:38%;left:36%;animation-delay:.5s;font-size:clamp(18px,2.5vw,30px)">🦜</div>
+    <div class="sanimal float" style="top:22%;left:52%;animation-delay:1s;font-size:clamp(16px,2vw,26px)">🦋</div>
+    <div class="sanimal" style="bottom:52px;right:16%;font-size:clamp(20px,2.5vw,30px)">🐆</div>
+    <div class="glayer"></div>
+    <div class="slabel">Your rainforest · 3 animals living here</div>
+  </div>
+</div>
+<span class="sl">Your adopted animals</span>
+<div class="adgrid">
+  <div class="adcard feat">
+    <div class="adtop"><span class="ademo">🦧</span><span class="adbadge gold">Gold guardian</span></div>
+    <p class="adname">Sumatran Orangutan</p><p class="adspec">Pongo abelii · Sumatra, Indonesia</p>
+    <div class="trsect"><div class="trlabel"><span>Wild population</span><strong>13,846</strong></div><div class="trbg"><div class="trfill dec" style="width:28%"></div></div></div>
+    <div class="adoff"><div class="odot"></div>2 offspring born in the wild this year</div>
+    <div class="adfoot"><div class="addonate">Donated <strong>£25</strong></div><button class="minibtn">View journey</button></div>
+  </div>
+  <div class="adcard">
+    <div class="adtop"><span class="ademo">🐅</span><span class="adbadge">Silver guardian</span></div>
+    <p class="adname">Amur Leopard</p><p class="adspec">Panthera pardus orientalis · Russia</p>
+    <div class="trsect"><div class="trlabel"><span>Wild population</span><strong>~100</strong></div><div class="trbg"><div class="trfill rec" style="width:18%"></div></div></div>
+    <div class="adoff"><div class="odot"></div>Population slowly recovering since 2020</div>
+    <div class="adfoot"><div class="addonate">Donated <strong>£12</strong></div><button class="minibtn">View journey</button></div>
+  </div>
+  <div class="adcard">
+    <div class="adtop"><span class="ademo">🐢</span><span class="adbadge">Bronze guardian</span></div>
+    <p class="adname">Hawksbill Sea Turtle</p><p class="adspec">Eretmochelys imbricata · Global oceans</p>
+    <div class="trsect"><div class="trlabel"><span>Nesting females</span><strong>~8,000</strong></div><div class="trbg"><div class="trfill dec" style="width:22%"></div></div></div>
+    <div class="adoff"><div class="odot"></div>Nesting season begins June 2026</div>
+    <div class="adfoot"><div class="addonate">Donated <strong>£10</strong></div><button class="minibtn">View journey</button></div>
+  </div>
+  <div class="adcard addnew" onclick="nav('activities')">
+    <div class="addicon">+</div><strong>Adopt a new animal</strong>
+    <p>Choose from 200+ endangered species and start protecting them today</p>
+  </div>
+</div>
+<div class="tchart">
+  <div class="tchead">
+    <h3>Population trends since you started supporting</h3>
+    <div class="tlegend">
+      <div class="litem"><div class="ldot" style="background:#7ec88a"></div>Amur Leopard</div>
+      <div class="litem"><div class="ldot" style="background:#e05a45"></div>Orangutan</div>
+      <div class="litem"><div class="ldot" style="background:#f5c87a"></div>Sea Turtle</div>
+    </div>
+  </div>
+  <svg width="100%" height="100" viewBox="0 0 600 100" preserveAspectRatio="none">
+    <line x1="0" y1="25" x2="600" y2="25" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <line x1="0" y1="75" x2="600" y2="75" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <polyline points="0,75 100,72 200,68 300,62 400,55 500,48 600,42" fill="none" stroke="#7ec88a" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="0,30 100,34 200,40 300,46 400,52 500,58 600,65" fill="none" stroke="#e05a45" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="0,45 100,48 200,50 300,52 400,55 500,57 600,60" fill="none" stroke="#f5c87a" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="0" y="98" font-size="10" fill="rgba(232,245,233,0.3)" font-family="DM Sans,sans-serif">Jan 25</text>
+    <text x="195" y="98" font-size="10" fill="rgba(232,245,233,0.3)" font-family="DM Sans,sans-serif">May 25</text>
+    <text x="390" y="98" font-size="10" fill="rgba(232,245,233,0.3)" font-family="DM Sans,sans-serif">Sep 25</text>
+    <text x="530" y="98" font-size="10" fill="rgba(232,245,233,0.3)" font-family="DM Sans,sans-serif">Jan 26</text>
+  </svg>
+</div>
+<div class="donpanel">
+  <h3>Support your animals today</h3>
+  <p>Every donation goes directly to organisations protecting your adopted species in the wild.</p>
+  <div class="donopts">
+    <button class="donchip" onclick="setDon(this,'£2','feeds a ranger for a day')">£2</button>
+    <button class="donchip active" onclick="setDon(this,'£5','plants 10 trees in orangutan habitat')">£5</button>
+    <button class="donchip" onclick="setDon(this,'£10','funds one day of anti-poaching patrol')">£10</button>
+    <button class="donchip" onclick="setDon(this,'£25','sponsors a wildlife camera trap for a month')">£25</button>
+  </div>
+  <div class="donimp" id="donimp"><strong>£5</strong> plants 10 trees in orangutan habitat in Sumatra — directly supporting your adopted species.</div>
+  <button class="btn">Donate now to WWF UK</button>
+</div>
+<div class="divider"></div>
+<span class="sl">Your guardian community</span>
+<div class="comgrid">
+  <div class="comcard"><span class="comemo">🌍</span><h4>84,219</h4><p>Guardians worldwide protecting wildlife</p></div>
+  <div class="comcard"><span class="comemo">💚</span><h4>£2.1M</h4><p>Raised by WildGuard users this year</p></div>
+  <div class="comcard"><span class="comemo">🐾</span><h4>1,204</h4><p>Wild offspring tracked across all gardens</p></div>
+</div>
+<div class="botpad"></div>
+</div>
+
+<!-- ══ ACTIVITIES ══ -->
+<div class="page" id="page-activities">
+<nav>
+  <a class="logo" onclick="nav('home')">Wild<span>Guard</span></a>
+  <ul class="navlinks">
+    <li><a onclick="nav('home')">Home</a></li>
+    <li><a onclick="nav('garden')">My Garden</a></li>
+    <li><a class="active" onclick="nav('activities')">Activities</a></li>
+  </ul>
+  <button class="btn" onclick="nav('garden')">My Garden →</button>
+</nav>
+<div class="acthero">
+  <div class="hero-tag">Conservation HQ</div>
+  <h1>Learn. Play. <em>Protect.</em></h1>
+  <p>Every game earns XP, teaches something real, and spreads the word about endangered animals.</p>
+</div>
+<div class="xpbar">
+  <div class="xpavatar">🌿</div>
+  <div class="xpinfo">
+    <div class="xptop"><span class="xpname">Junior Ranger</span><span class="xplvl">Level 4 · 620 / 1000 XP</span></div>
+    <div class="xptrack"><div class="xpfill"></div></div>
+    <div class="xpsub">380 XP to reach Level 5 — Wildlife Expert</div>
+  </div>
+  <div class="xpbadges">
+    <div class="xpbadge">🏆</div><div class="xpbadge">🌴</div><div class="xpbadge">🛡️</div>
+    <div class="xpbadge lock">🌍</div><div class="xpbadge lock">⭐</div>
+  </div>
+</div>
+<span class="sl">All activities</span>
+<div class="actcards">
+  <div class="actcard"><div class="ach"><span class="acico">🧠</span><span class="acdiff easy">Easy–Hard</span></div><div class="acb"><h3>Animal Trivia Quiz</h3><p>Test your wildlife knowledge across 5 rounds. Earn bonus XP for streaks and speed answers.</p><div class="acfoot"><span class="acxp">+50 XP per round</span><span class="acpl">12,440 played today</span></div></div><div class="acbar"><div class="acbarf" style="width:75%"></div></div></div>
+  <div class="actcard"><div class="ach"><span class="acico">🏗️</span><span class="acdiff med">Medium</span></div><div class="acb"><h3>Habitat Builder</h3><p>Build the perfect habitat for an animal by choosing the right plants, food, and conditions.</p><div class="acfoot"><span class="acxp">+80 XP per build</span><span class="acpl">8,201 played today</span></div></div><div class="acbar"><div class="acbarf" style="width:55%"></div></div></div>
+  <div class="actcard"><div class="ach"><span class="acico">💬</span><span class="acdiff easy">Easy</span></div><div class="acb"><h3>Send an Animal a Message</h3><p>Write a message of support for your favourite animal and share with the community.</p><div class="acfoot"><span class="acxp">+30 XP per message</span><span class="acpl">5,832 messages sent</span></div></div><div class="acbar"><div class="acbarf" style="width:40%"></div></div></div>
+  <div class="actcard"><div class="ach"><span class="acico">🔗</span><span class="acdiff hard">Hard</span></div><div class="acb"><h3>Species Matchmaker</h3><p>Match each animal to its role in the ecosystem — pollinator, apex predator, seed disperser.</p><div class="acfoot"><span class="acxp">+100 XP per match</span><span class="acpl">3,918 played today</span></div></div><div class="acbar"><div class="acbarf" style="width:30%"></div></div></div>
+</div>
+<div class="divider" style="margin-top:1.5rem"></div>
+
+<!-- QUIZ -->
+<span class="sl">Play now · Animal trivia quiz</span>
+<div class="quizp">
+  <div class="quiztop"><h3 id="qround">Round 1 of 5</h3><span class="qprog">Score: <strong id="qscore">0</strong> · Streak: <strong id="qstreak">0</strong></span></div>
+  <div class="qbody">
+    <p class="qq" id="qq"></p>
+    <div class="qopts" id="qopts"></div>
+    <div class="qfb" id="qfb"></div>
+    <div class="qnav"><div class="qpills" id="qpills"></div><button class="btn" id="qnext" style="display:none" onclick="nextQ()">Next question →</button></div>
+  </div>
+</div>
+<div class="divider" style="margin-top:1.5rem"></div>
+
+<!-- HABITAT BUILDER -->
+<span class="sl">Habitat Builder</span>
+<div class="hbp">
+  <div class="hbtop"><h3>Build the perfect habitat</h3><span class="hbscore" id="hbscore">Score: 0 / 5</span></div>
+  <div class="hbbody">
+    <p class="hbinstr">Select a habitat, then tap elements to add them. <strong>Some don't belong — spot the wrong ones!</strong></p>
+    <div class="hbhabs">
+      <button class="hbhab active" onclick="setHab(this,'rainforest')">🌴 Rainforest</button>
+      <button class="hbhab" onclick="setHab(this,'ocean')">🌊 Ocean</button>
+      <button class="hbhab" onclick="setHab(this,'arctic')">🧊 Arctic</button>
+    </div>
+    <div class="hbscene" id="hbscene"><span class="hbdlabel" id="hblabel">Tap elements below to add them</span></div>
+    <div class="hbresult" id="hbresult"></div>
+    <div class="hbpalbl">Available elements</div>
+    <div class="hbpal" id="hbpal"></div>
+  </div>
+</div>
+<div class="divider" style="margin-top:1.5rem"></div>
+
+<!-- WHAT DISAPPEARS -->
+<span class="sl">What Would Disappear?</span>
+<div class="wdp">
+  <div class="wdtop"><h3>If this animal vanished...</h3><p>Choose a species to see how its extinction ripples through our world</p></div>
+  <div class="wdbody">
+    <div class="wdrow">
+      <button class="wdbtn" onclick="showWD(this,'bee')">🐝 Bees</button>
+      <button class="wdbtn" onclick="showWD(this,'shark')">🦈 Sharks</button>
+      <button class="wdbtn" onclick="showWD(this,'elephant')">🐘 Elephants</button>
+      <button class="wdbtn" onclick="showWD(this,'wolf')">🐺 Wolves</button>
+    </div>
+    <div class="wdimps" id="wdimps"><div class="wdicgrid" id="wdgrid"></div></div>
+  </div>
+</div>
+<div class="divider" style="margin-top:1.5rem"></div>
+
+<!-- MESSAGE -->
+<span class="sl">Send an animal a message</span>
+<div class="msgp">
+  <div class="msgtop"><h3>Your words matter</h3><p>Write a message of support and share with the WildGuard community</p></div>
+  <div class="msgbody">
+    <div class="msganims">
+      <div class="msganim active" onclick="pickAnim(this)"><span class="emo">🦧</span><span class="lbl">Orangutan</span></div>
+      <div class="msganim" onclick="pickAnim(this)"><span class="emo">🐅</span><span class="lbl">Amur Leopard</span></div>
+      <div class="msganim" onclick="pickAnim(this)"><span class="emo">🐢</span><span class="lbl">Sea Turtle</span></div>
+      <div class="msganim" onclick="pickAnim(this)"><span class="emo">🦏</span><span class="lbl">White Rhino</span></div>
+    </div>
+    <textarea class="msgtx" id="msgtx" placeholder="Dear Orangutan, I want you to know that I am rooting for you..." maxlength="200" oninput="document.getElementById('msgchar').textContent=this.value.length+' / 200'"></textarea>
+    <div class="msgchar" id="msgchar">0 / 200</div>
+    <div class="msgacts"><button class="btn" onclick="postMsg()">Share with community →</button><span class="msgshare">+30 XP for sharing</span></div>
+    <div class="msgclbl">Recent messages from guardians</div>
+    <div id="msgfeed">
+      <div class="msgpost"><div class="msgav">🌿</div><div><div><span class="mpname">Mia, age 9</span><span class="mpanml">🦧 Orangutan</span></div><p class="mptx">I promise to never use products with palm oil. You deserve to have your home safe and sound.</p><div class="mplikes" onclick="likePost(this)">♡ 48 likes</div></div></div>
+      <div class="msgpost" style="margin-top:.6rem"><div class="msgav">🦁</div><div><div><span class="mpname">Jake, age 11</span><span class="mpanml">🐅 Amur Leopard</span></div><p class="mptx">You are the most beautiful animal I have ever seen. We will not let you disappear. Stay strong!</p><div class="mplikes" onclick="likePost(this)">♡ 31 likes</div></div></div>
+      <div class="msgpost" style="margin-top:.6rem"><div class="msgav">🐋</div><div><div><span class="mpname">Sofia, age 10</span><span class="mpanml">🐢 Sea Turtle</span></div><p class="mptx">My family stopped buying single-use plastic because of you. The ocean is your home and we will protect it.</p><div class="mplikes" onclick="likePost(this)">♡ 72 likes</div></div></div>
+    </div>
+  </div>
+</div>
+<div class="divider" style="margin-top:1.5rem"></div>
+
+<!-- MATCHMAKER -->
+<span class="sl">Species Matchmaker</span>
+<div class="matp">
+  <div class="mattop"><h3>Match the animal to its ecosystem role</h3><p>Every species has a job in nature. Can you pair them correctly? <strong style="color:var(--amber)">Tip: roles are shuffled — think carefully!</strong></p></div>
+  <div class="matbody">
+    <div class="matgrid">
+      <div class="matcol">
+        <h4>Animals</h4>
+        <div class="matitem" id="ma-bee" onclick="selAnim(this,'bee')">🐝 Honey Bee</div>
+        <div class="matitem" id="ma-wolf" onclick="selAnim(this,'wolf')">🐺 Grey Wolf</div>
+        <div class="matitem" id="ma-elephant" onclick="selAnim(this,'elephant')">🐘 African Elephant</div>
+        <div class="matitem" id="ma-bat" onclick="selAnim(this,'bat')">🦇 Fruit Bat</div>
+      </div>
+      <div class="matcol">
+        <h4>Ecosystem roles</h4>
+        <!-- roles rendered shuffled by JS -->
+        <div id="rolesCol"></div>
+      </div>
+    </div>
+    <div class="matscore">Matched: <strong id="matscore">0 / 4</strong></div>
+  </div>
+</div>
+<div class="botpad"></div>
+</div>
+
+<script>
+// ── NAV ──
+function nav(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active')});
+  document.getElementById('page-'+p).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── HABITAT CHIPS (home) ──
+document.querySelectorAll('.hchip').forEach(function(c){
+  c.addEventListener('click',function(){
+    document.querySelectorAll('.hchip').forEach(function(x){x.classList.remove('active')});
+    this.classList.add('active');
+  });
+});
+
+// ── DONATION ──
+function setDon(el,amt,impact){
+  document.querySelectorAll('.donchip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  document.getElementById('donimp').innerHTML='<strong>'+amt+'</strong> '+impact+' — directly supporting your adopted species.';
+}
+
+// ── QUIZ ──
+var QD=[
+  {r:'Round 1 of 5 · Rainforest',q:'Which animal is a keystone species in the Amazon rainforest?',opts:['Jaguar','Giant Agouti','Green Anaconda','Harpy Eagle'],c:1,fb:['The jaguar is an apex predator, not a keystone species in the same way.','Correct! The Brazil nut tree depends on the agouti to crack its seeds — without it, the forest cannot reproduce.','The anaconda is a top predator but plays a different role from a keystone species.','The harpy eagle is magnificent but not the keystone species here.']},
+  {r:'Round 2 of 5 · Extinction',q:'How many species go extinct every day on average?',opts:['About 1','About 10','About 150','About 1,000'],c:2,fb:['Much more sadly — scientists estimate around 150 species are lost every single day.','Still much more — the true number is around 150 species per day.','Correct! Scientists estimate around 150 species disappear every day — one every 10 minutes.','Even this staggering number is an overestimate — the current figure is around 150 per day.']},
+  {r:'Round 3 of 5 · Rainforest',q:"What percentage of the world's oxygen comes from the Amazon?",opts:['5%','10%','20%','50%'],c:2,fb:["Higher — the Amazon produces around 20% of the world's oxygen.",'Close — the Amazon actually produces around 20%.','Correct! The Amazon generates roughly 20% of the world\'s oxygen — the lungs of the Earth.','Too high — the Amazon produces around 20%.']},
+  {r:'Round 4 of 5 · Orangutans',q:'What is the main reason orangutans are endangered?',opts:['Climate change','Palm oil plantations','Hunting','Disease'],c:1,fb:['Climate change is a factor but the biggest threat is deforestation for palm oil.','Correct! Palm oil plantations destroy vast areas of rainforest, eliminating orangutan habitat. Check your product labels!','Hunting is a smaller threat compared to the impact of deforestation.','Disease is not the primary threat — deforestation for palm oil is the main cause.']},
+  {r:'Round 5 of 5 · Conservation',q:'Which of these is NOT a critically endangered species?',opts:['Amur Leopard','Red Fox','Sumatran Orangutan','Vaquita Porpoise'],c:1,fb:['The Amur Leopard is critically endangered with fewer than 100 left in the wild.','Correct! The Red Fox is one of the most widespread mammals on Earth — not endangered at all.','The Sumatran Orangutan is critically endangered — losing 1,000 individuals per year.','The Vaquita is critically endangered with perhaps fewer than 10 left in the world.']}
+];
+var qi=0,qs=0,qst=0;
+function buildQPills(){var p=document.getElementById('qpills');p.innerHTML='';for(var i=0;i<QD.length;i++){var d=document.createElement('div');d.className='qpill'+(i===qi?' cur':'');d.id='qp'+i;p.appendChild(d);}}
+function loadQ(){var q=QD[qi];document.getElementById('qround').textContent=q.r;document.getElementById('qq').textContent=q.q;document.getElementById('qfb').className='qfb';document.getElementById('qnext').style.display='none';var c=document.getElementById('qopts');c.innerHTML='';q.opts.forEach(function(opt,i){var b=document.createElement('button');b.className='qopt';b.innerHTML='<span class="qletter">'+['A','B','C','D'][i]+'</span>'+opt;var cor=(i===q.c);var fb=q.fb[i];b.onclick=function(){ansQ(b,cor,fb);};c.appendChild(b);});buildQPills();}
+function ansQ(el,cor,fb){document.querySelectorAll('.qopt').forEach(function(o){o.classList.add('dis')});var f=document.getElementById('qfb');if(cor){el.classList.add('cor');qs+=50;qst++;f.className='qfb show good';f.textContent='✓ '+fb;}else{el.classList.add('wrg');qst=0;f.className='qfb show bad';f.textContent='✗ '+fb;}document.getElementById('qscore').textContent=qs;document.getElementById('qstreak').textContent=qst;var p=document.getElementById('qp'+qi);if(p)p.className='qpill '+(cor?'cor':'wrg');if(qi<QD.length-1)document.getElementById('qnext').style.display='block';}
+function nextQ(){qi++;if(qi<QD.length)loadQ();}
+loadQ();
+
+// ── HABITAT BUILDER ──
+var HABS={
+  rainforest:{correct:['🌴 Palm','🍄 Fungi','🦧 Orangutan','🌿 Fern','🦜 Macaw'],wrong:['🐧 Penguin','🌵 Cactus','🐻‍❄️ Polar Bear']},
+  ocean:{correct:['🐠 Clownfish','🪸 Coral','🦈 Shark','🐙 Octopus','🌊 Kelp'],wrong:['🦒 Giraffe','🌴 Palm','🐘 Elephant']},
+  arctic:{correct:['🐻‍❄️ Polar Bear','🦭 Seal','🐧 Penguin','🧊 Ice','🐋 Whale'],wrong:['🌴 Palm','🦧 Orangutan','🌵 Cactus']}
+};
+var hbPlaced=[],hbCor=0,curHab='rainforest';
+function setHab(btn,hab){document.querySelectorAll('.hbhab').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');curHab=hab;hbPlaced=[];hbCor=0;document.getElementById('hbscene').innerHTML='<span class="hbdlabel" id="hblabel">Tap elements below to add them</span>';document.getElementById('hbscore').textContent='Score: 0 / 5';document.getElementById('hbresult').className='hbresult';buildHBPal(hab);}
+function buildHBPal(hab){var all=HABS[hab].correct.concat(HABS[hab].wrong).sort(function(){return Math.random()-.5});var p=document.getElementById('hbpal');p.innerHTML='';all.forEach(function(item){var isCor=HABS[hab].correct.indexOf(item)>-1;var el=document.createElement('div');el.className='hbitem';el.innerHTML=item.split(' ')[0]+'<span>'+item.split(' ').slice(1).join(' ')+'</span>';el.onclick=function(){placeHB(item,isCor,el)};p.appendChild(el);});}
+function placeHB(item,isCor,el){if(hbPlaced.indexOf(item)>-1)return;hbPlaced.push(item);var sc=document.getElementById('hbscene');var lb=document.getElementById('hblabel');if(lb)lb.style.display='none';var sp=document.createElement('span');sp.className='hbplaced';sp.textContent=item.split(' ')[0];sp.title=item;sc.appendChild(sp);if(isCor){hbCor++;el.style.opacity='.3';el.style.pointerEvents='none';}else{el.style.borderColor='rgba(220,80,60,.5)';el.style.background='rgba(220,80,60,.08)';sp.style.filter='grayscale(1) opacity(.35)';}document.getElementById('hbscore').textContent='Score: '+hbCor+' / 5';if(hbCor>=5){var r=document.getElementById('hbresult');r.className='hbresult show';r.textContent='🎉 Perfect habitat! All 5 correct — you earn 80 XP and unlock the Habitat Hero badge!';}}
+buildHBPal('rainforest');
+
+// ── WHAT DISAPPEARS ──
+var WDD={
+  bee:[{i:'🍎',t:'Fruit & vegetables',d:'One third of all food we eat depends on bees to pollinate it. No bees means no apples, strawberries, almonds, or coffee.'},{i:'💊',t:'Medicines',d:'Many plants used in medicine rely on bees for reproduction. Losing bees could mean losing cures we have not yet discovered.'},{i:'🌼',t:'Wildflowers',d:'80% of wildflowers need pollinators to reproduce. Without bees, meadows and fields would go silent and bare.'}],
+  shark:[{i:'🐟',t:'Fish populations',d:'Sharks keep fish populations balanced. Without them, certain fish explode in number, wiping out coral reefs and seagrass.'},{i:'🌊',t:'Ocean carbon',d:'Healthy oceans absorb 30% of our CO2. Without sharks, ocean ecosystems collapse and this balance breaks.'},{i:'🤿',t:'Coral reefs',d:'Without sharks, herbivorous fish multiply and graze reefs bare. Entire reef ecosystems collapse.'}],
+  elephant:[{i:'🌳',t:'Forest trees',d:'Elephants disperse seeds over vast distances. Many large trees cannot reproduce without them.'},{i:'💧',t:'Water sources',d:'Elephants dig water holes used by dozens of other species. Remove them and many animals lose access to water.'},{i:'🦁',t:'Wildlife corridors',d:'Elephants create paths and clearings that become habitats for hundreds of other species.'}],
+  wolf:[{i:'🦌',t:'Deer populations',d:'Without wolves, deer populations explode and overgraze vegetation, stripping riverbanks bare and causing erosion.'},{i:'🐟',t:'Rivers and fish',d:'When wolves returned to Yellowstone, rivers recovered — fewer deer meant more bankside plants, stabilising rivers for fish.'},{i:'🌿',t:'Grasslands',d:'Wolves keep grazing animals moving, allowing grass and shrubs to recover. Remove them and landscapes are eaten bare.'}]
+};
+function showWD(btn,a){document.querySelectorAll('.wdbtn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');var g=document.getElementById('wdgrid');g.innerHTML='';WDD[a].forEach(function(d){var c=document.createElement('div');c.className='wdic';c.innerHTML='<span class="wdicico">'+d.i+'</span><h4>'+d.t+'</h4><p>'+d.d+'</p>';g.appendChild(c);});document.getElementById('wdimps').className='wdimps show';}
+
+// ── MESSAGE ──
+function pickAnim(el){document.querySelectorAll('.msganim').forEach(function(o){o.classList.remove('active')});el.classList.add('active');}
+function postMsg(){var txt=document.getElementById('msgtx').value.trim();if(!txt)return;var a=document.querySelector('.msganim.active');var emo=a?a.querySelector('.emo').textContent:'🌿';var feed=document.getElementById('msgfeed');var post=document.createElement('div');post.className='msgpost';post.style.marginTop='.6rem';post.innerHTML='<div class="msgav">'+emo+'</div><div><div><span class="mpname">You, just now</span><span class="mpanml">'+emo+' Your message</span></div><p class="mptx">'+txt+'</p><div class="mplikes" onclick="likePost(this)">♡ 0 likes</div></div>';feed.insertBefore(post,feed.firstChild);document.getElementById('msgtx').value='';document.getElementById('msgchar').textContent='0 / 200';}
+function likePost(el){var n=parseInt(el.textContent.match(/\d+/)[0])+1;el.textContent='♥ '+n+' likes';el.style.color='#e05a45';}
+
+// ── MATCHMAKER (shuffled roles) ──
+var PAIRS={bee:'pollinator',wolf:'apex',elephant:'engineer',bat:'seed'};
+var ROLELABELS={pollinator:'🌸 Pollinator',apex:'⚡ Apex predator',engineer:'🌍 Ecosystem engineer',seed:'🌱 Seed disperser'};
+var selAn=null,matCount=0;
+
+// Shuffle and render roles column on load
+(function renderRoles(){
+  var roles=Object.keys(ROLELABELS).sort(function(){return Math.random()-.5});
+  var col=document.getElementById('rolesCol');
+  col.innerHTML='';
+  roles.forEach(function(role){
+    var el=document.createElement('div');
+    el.className='matitem';
+    el.id='mr-'+role;
+    el.textContent=ROLELABELS[role];
+    el.onclick=function(){selRole(el,role);};
+    col.appendChild(el);
+  });
+})();
+
+function selAnim(el,animal){
+  if(el.classList.contains('matched'))return;
+  document.querySelectorAll('[id^="ma-"]').forEach(function(e){e.classList.remove('sel')});
+  el.classList.add('sel');
+  selAn=animal;
+}
+function selRole(el,role){
+  if(el.classList.contains('matched')||!selAn)return;
+  var aEl=document.getElementById('ma-'+selAn);
+  if(PAIRS[selAn]===role){
+    aEl.classList.remove('sel');aEl.classList.add('matched');
+    el.classList.add('matched');matCount++;
+    document.getElementById('matscore').textContent=matCount+' / 4';
+    selAn=null;
+  }else{
+    aEl.classList.add('wrong');el.classList.add('wrong');
+    setTimeout(function(){aEl.classList.remove('wrong','sel');el.classList.remove('wrong');selAn=null;},600);
+  }
+}
+</script>
+</body>
+</html>
